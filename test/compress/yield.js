@@ -327,3 +327,59 @@ yield_as_template_tag: {
     }
     expect_exact: "function*f1(){return(yield foo)`x`}function*f2(){return yield foo`x`}function*f3(){return(yield*foo)`x`}function*f4(){return yield*foo`x`}function*f5(service){return(yield*(yield*service)`x`).length>0}"
 }
+
+iife_argument_side_effects_generator: {
+    options = {
+        collapse_vars: true,
+        reduce_vars: true,
+        side_effects: true,
+        toplevel: true,
+        unused: true,
+    }
+    input: {
+        try {
+            (function*(a) {
+                return a;
+            })(null.x);
+            console.log("after");
+        } catch (e) {
+            console.log("caught", e.name);
+        }
+    }
+    expect: {
+        try {
+            (function*() {})(null.x);
+            console.log("after");
+        } catch (e) {
+            console.log("caught", e.name);
+        }
+    }
+    expect_stdout: "caught TypeError"
+}
+
+iife_argument_variable_generator: {
+    options = {
+        collapse_vars: true,
+        reduce_vars: true,
+        side_effects: true,
+        toplevel: true,
+        unused: true,
+    }
+    input: {
+        var y = 1;
+        var g = (function*(x) {
+            console.log(x);
+        })(y);
+        y = 2;
+        g.next();
+    }
+    expect: {
+        var y = 1;
+        var g = function*(x) {
+            console.log(x);
+        }(y);
+        y = 2;
+        g.next();
+    }
+    expect_stdout: "1"
+}

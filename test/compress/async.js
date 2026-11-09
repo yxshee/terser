@@ -485,3 +485,53 @@ await_empty_seq: {
         col: 21,
     })
 }
+
+iife_argument_side_effects_async: {
+    options = {
+        collapse_vars: true,
+        reduce_vars: true,
+        side_effects: true,
+        toplevel: true,
+        unused: true,
+    }
+    input: {
+        try {
+            (async function(a) {
+                return a;
+            })(null.x);
+            console.log("after");
+        } catch (e) {
+            console.log("caught", e.name);
+        }
+    }
+    expect: {
+        try {
+            (async function() {})(null.x);
+            console.log("after");
+        } catch (e) {
+            console.log("caught", e.name);
+        }
+    }
+    expect_stdout: "caught TypeError"
+}
+
+iife_argument_constant_async: {
+    options = {
+        collapse_vars: true,
+        reduce_vars: true,
+        side_effects: true,
+        toplevel: true,
+        unused: true,
+    }
+    input: {
+        (async function(x) {
+            await console.log(x);
+        })(4);
+    }
+    expect: {
+        (async function() {
+            await console.log(4);
+        })();
+    }
+    expect_stdout: "4"
+}
